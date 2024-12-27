@@ -11,8 +11,4 @@ export const REGION = "us-east-2"
 
 export const PROD_ZONE_NAME = "doggers.dog"
 
-export const BETA_ZONE_NAME = "beta.doggers.dog"
-
-export const PROD_ROLE_NAME = "DoggersDogDelegationRole"
-
-export const DOMAIN_DELEGATED = false
+export const DOMAIN_DELEGATED = true
