@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run build --ws",
     "lint": "npm run lint --ws",
-    "dev": "npm run dev -w packages/website"
+    "dev": "npm run dev -w packages/website",
+    "cdk": "npm run cdk -w packages/cdk"
   },
   "workspaces": [
     "./packages/*"

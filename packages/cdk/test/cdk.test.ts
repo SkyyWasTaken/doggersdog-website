@@ -4,11 +4,11 @@
 import { test } from '@jest/globals'
 
 // example test. To run these tests, uncomment this file along with the
-// example resource in lib/cdk-stack.ts
+// example resource in lib/application-stack.ts
 test('SQS Queue Created', () => {
 //   const app = new cdk.App();
 //     // WHEN
-//   const stack = new Cdk.CdkStack(app, 'MyTestStack');
+//   const stack = new Cdk.ApplicationStack(app, 'MyTestStack');
 //     // THEN
 //   const template = Template.fromStack(stack);
 
