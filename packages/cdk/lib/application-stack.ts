@@ -45,7 +45,7 @@ export class ApplicationStack extends Stack {
         roleName: roleName,
       })
       this.hostedZone.grantDelegation(betaPrincipal)
-    } else {
+    } else if (DOMAIN_DELEGATED) {
       this.registerPrimaryZone(this, roleName, appProps.stageName)
     }
   }
