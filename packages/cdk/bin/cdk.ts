@@ -19,8 +19,7 @@ pipelineStack.pipeline.addStage(new ApplicationStage(app, {
         account: ACCOUNTS.beta,
         region: REGION
     },
-    appStageName: 'Beta'
-}))
+}, {stageName: 'Beta',}))
 
 // Add prod
 pipelineStack.pipeline.addStage(new ApplicationStage(app, {
@@ -28,7 +27,6 @@ pipelineStack.pipeline.addStage(new ApplicationStage(app, {
         account: ACCOUNTS.prod,
         region: REGION
     },
-    appStageName: 'Prod'
-}))
+}, {stageName: 'Prod'}))
 
 app.synth();

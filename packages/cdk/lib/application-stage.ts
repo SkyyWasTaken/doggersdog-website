@@ -1,17 +1,12 @@
-import {Environment, Stage, StageProps} from "aws-cdk-lib";
+import {Stage, StageProps} from "aws-cdk-lib";
 import {ApplicationStack} from "./application-stack";
-
-export interface ApplicationStageProps extends StageProps {
-    readonly env: Environment;
-    readonly appStageName: string;
-}
+import {ApplicationStackProps} from "./props";
 
 export class ApplicationStage extends Stage {
-    constructor(scope: any, props: ApplicationStageProps) {
-        super(scope, `${props.appStageName}ApplicationStage`, props);
-        new ApplicationStack(this, `${props.appStageName}ApplicationStack`, {
+    constructor(scope: any, props: StageProps, appProps: ApplicationStackProps) {
+        super(scope, `${appProps.stageName}ApplicationStage`, props);
+        new ApplicationStack(this, `${appProps.stageName}ApplicationStack`, {
             env: props.env,
-            stackName: props.appStageName
-        });
+        }, appProps);
     }
 }
