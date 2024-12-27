@@ -1,7 +1,7 @@
 import { Construct } from 'constructs';
 import {Stack, StackProps} from "aws-cdk-lib";
 import {CrossAccountZoneDelegationRecord, PublicHostedZone} from "aws-cdk-lib/aws-route53";
-import {ACCOUNTS, PROD_ZONE_NAME} from "./constants";
+import {ACCOUNTS, DOMAIN_DELEGATED, PROD_ZONE_NAME} from "./constants";
 import {ApplicationStackProps} from "./props";
 import {AccountPrincipal, PolicyDocument, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
 
@@ -16,7 +16,7 @@ export class ApplicationStack extends Stack {
       zoneName = "doggers.dog"
     }
 
-    this.hostedZone = new PublicHostedZone(this, 'HostedZone', {
+    this.hostedZone = new PublicHostedZone(this, 'DoggersDogHostedZone', {
       zoneName: zoneName,
       caaAmazon: true,
     })
