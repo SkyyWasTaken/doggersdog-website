@@ -7,7 +7,9 @@ import {Construct} from "constructs";
 export class ApplicationStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps, stageName: string) {
     super(scope, id, props);
-    new Route53Construct(this, 'Route53Construct',  stageName, props.env?.account === ACCOUNTS.prod,)
+
+    new Route53Construct(this, 'Route53Construct',  stageName, props.env?.account === ACCOUNTS.prod)
+
   }
 }
 
@@ -15,7 +17,7 @@ class Route53Construct extends Construct {
   private readonly hostedZone: PublicHostedZone;
   constructor(scope: Construct, id: string, stageName: string, isProd: boolean) {
         super(scope, id);
-    const zoneName = isProd ? 'doggers.dog' : `${stageName.toLowerCase()}.doggers.dog`
+    const zoneName = isProd ? PROD_ZONE_NAME : `${stageName.toLowerCase()}.${PROD_ZONE_NAME}`
 
     this.hostedZone = new PublicHostedZone(this, 'DoggersDogHostedZone', {
       zoneName: zoneName,
@@ -25,13 +27,13 @@ class Route53Construct extends Construct {
     // Delegate to the beta stage
     const roleName = 'DoggersDogDelegationRole'
     if (isProd) {
-      this.createDelegationRole(roleName)
+      this.createDelegation(roleName)
     } else if (DOMAIN_DELEGATED) {
       this.registerDelegationRecord(this, roleName)
     }
   }
 
-  private createDelegationRole(roleName: string) {
+  private createDelegation(roleName: string) {
     const betaPrincipal = new AccountPrincipal(ACCOUNTS.beta)
     new Role(this, roleName, {
       assumedBy: betaPrincipal,
