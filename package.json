@@ -10,7 +10,7 @@
     "cdk": "npm run cdk -w packages/cdk"
   },
   "workspaces": [
-    "./packages/*"
+    "./packages/website", "./packages/api", "./packages/cdk"
   ],
   "keywords": [],
   "author": "",
