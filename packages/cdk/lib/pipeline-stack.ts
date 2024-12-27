@@ -10,7 +10,7 @@ export class DoggersDogPipelineStack extends cdk.Stack {
             pipelineName: 'DoggersDogPipeline',
             synth: new ShellStep('Synth', {
                 input: CodePipelineSource.gitHub('SkyyWasTaken/doggersdog-website', 'main'),
-                commands: ['npm ci', 'npm run build', 'npx cdk synth']
+                commands: ['npm ci', 'npm run build']
             })
         });
     }
