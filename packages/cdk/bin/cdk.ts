@@ -14,7 +14,7 @@ const pipelineStack = new DoggersDogPipelineStack(app, 'DoggersDogPipelineStack'
 });
 
 // Add beta
-const betaStage = pipelineStack.pipeline.addStage(new ApplicationStage(app, {
+pipelineStack.pipeline.addStage(new ApplicationStage(app, {
     env: {
         account: ACCOUNTS.beta,
         region: REGION
@@ -23,7 +23,7 @@ const betaStage = pipelineStack.pipeline.addStage(new ApplicationStage(app, {
 }))
 
 // Add prod
-const prodStage = pipelineStack.pipeline.addStage(new ApplicationStage(app, {
+pipelineStack.pipeline.addStage(new ApplicationStage(app, {
     env: {
         account: ACCOUNTS.prod,
         region: REGION
