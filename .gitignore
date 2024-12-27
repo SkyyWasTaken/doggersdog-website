@@ -4,7 +4,7 @@
 
 # CDK
 packages/cdk/.cdk.staging
-packages/cdk/cdk.out
+**/cdk.out
 packages/cdk/**/*.js
 packages/cdk/*.d.ts
 !packages/cdk/jest.config.js
