@@ -85,6 +85,7 @@ class Route53Construct extends Construct {
     if (BLUESKY_VERIFICATION_TXT !== "") {
       new TxtRecord(this, 'BlueskyRecord', {
         zone: this.hostedZone,
+        recordName: '_atproto',
         values: [BLUESKY_VERIFICATION_TXT],
       })
     }
