@@ -1,6 +1,13 @@
 import {Stack, StackProps} from "aws-cdk-lib";
-import {CrossAccountZoneDelegationRecord, HostedZone, PublicHostedZone} from "aws-cdk-lib/aws-route53";
-import {ACCOUNTS, DOMAIN_DELEGATED, PROD_ZONE_NAME} from "./constants";
+import {
+  ARecord,
+  CrossAccountZoneDelegationRecord,
+  HostedZone,
+  PublicHostedZone, RecordTarget,
+  SrvRecord,
+  TxtRecord
+} from "aws-cdk-lib/aws-route53";
+import {ACCOUNTS, BLUESKY_VERIFICATION_TXT, DOMAIN_DELEGATED, MINECRAFT_SERVER_IP, PROD_ZONE_NAME} from "./constants";
 import {AccountPrincipal, PolicyDocument, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
 import {Construct} from "constructs";
 
@@ -28,6 +35,7 @@ class Route53Construct extends Construct {
     const roleName = 'DoggersDogDelegationRole'
     if (isProd) {
       this.createDelegation(roleName)
+      this.createProdRecords()
     } else if (DOMAIN_DELEGATED) {
       this.registerDelegationRecord(this, roleName)
     }
@@ -70,5 +78,23 @@ class Route53Construct extends Construct {
       delegatedZone: this.hostedZone,
       parentHostedZoneName: PROD_ZONE_NAME,
     })
+  }
+
+  private createProdRecords() {
+    // @ts-ignore
+    if (BLUESKY_VERIFICATION_TXT !== "") {
+      new TxtRecord(this, 'BlueskyRecord', {
+        zone: this.hostedZone,
+        values: [BLUESKY_VERIFICATION_TXT],
+      })
+    }
+
+    // @ts-ignore
+    if (MINECRAFT_SERVER_IP !== "") {
+      new ARecord(this, 'MinecraftServerARecord', {
+        zone: this.hostedZone,
+        target: RecordTarget.fromIpAddresses(MINECRAFT_SERVER_IP)
+      })
+    }
   }
 }
