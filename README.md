@@ -18,8 +18,7 @@ with administrator access, adding an access token, and noting the token name and
 6. `cd ./packages/cdk`
 7. `cdk bootstrap aws://<beta account ID>/<desired region>`
 8. `aws configure` with your prod credentials
-9. `cdk bootstrap aws://<prod account id>/us-east-2 --trust <beta account ID> 
---cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess`
+9. `cdk bootstrap aws://<prod account id>/us-east-1 --trust <beta account ID> --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess`
 10. Set `DOMAIN_DELEGATED` to false `constants.ts`
 11. `cd ../..`
 12. `npm run cdk deploy`
