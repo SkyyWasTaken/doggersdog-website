@@ -1,15 +1,17 @@
-import {Stack, StackProps} from "aws-cdk-lib";
+import {RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
 import {
   ARecord,
   CrossAccountZoneDelegationRecord,
-  HostedZone,
-  PublicHostedZone, RecordTarget,
-  SrvRecord,
+  PublicHostedZone,
+  RecordTarget,
   TxtRecord
 } from "aws-cdk-lib/aws-route53";
 import {ACCOUNTS, BLUESKY_VERIFICATION_TXT, DOMAIN_DELEGATED, MINECRAFT_SERVER_IP, PROD_ZONE_NAME} from "./constants";
 import {AccountPrincipal, PolicyDocument, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
 import {Construct} from "constructs";
+import {Bucket, BucketEncryption} from "aws-cdk-lib/aws-s3";
+import {IpAddresses, Vpc} from "aws-cdk-lib/aws-ec2";
+import {CfnWebACL} from "aws-cdk-lib/aws-wafv2";
 
 export class ApplicationStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps, stageName: string) {
@@ -17,6 +19,35 @@ export class ApplicationStack extends Stack {
 
     new Route53Construct(this, 'Route53Construct',  stageName, props.env?.account === ACCOUNTS.prod)
 
+  }
+}
+
+class SiteInfrastructureConstruct extends Construct {
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
+
+    // Create the bucket
+    const assetBucket: Bucket = new Bucket(this, "WebsiteBucket", {
+      encryption: BucketEncryption.S3_MANAGED,
+      removalPolicy: RemovalPolicy.DESTROY
+    });
+
+    const vpc = new Vpc(this, "WebsiteVPC", {
+      ipAddresses: IpAddresses.cidr("10.0.0.0/16"),
+    })
+
+    const webAccessControlList = new CfnWebACL(this, "WebACL", {
+      name: "WebACL",
+      defaultAction: {
+        allow: {}
+      },
+      scope: "CLOUDFRONT",
+      visibilityConfig: {
+        cloudWatchMetricsEnabled: true,
+        metricName: "WebACL",
+        sampledRequestsEnabled: true
+      }
+    })
   }
 }
 
