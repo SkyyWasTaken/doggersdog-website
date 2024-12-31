@@ -5,9 +5,9 @@ export const ACCOUNTS = {
 
 export const PIPELINE_ACCOUNT = ACCOUNTS.beta
 
-export const PIPELINE_REGION = "us-east-2"
+export const PIPELINE_REGION = "us-east-1"
 
-export const REGION = "us-east-2"
+export const REGION = "us-east-1"
 
 export const PROD_ZONE_NAME = "doggers.dog"
 
