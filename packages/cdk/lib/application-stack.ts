@@ -62,71 +62,71 @@ class Route53Construct extends Construct {
       caaAmazon: true,
     })
 
-    //   // Delegate to the beta stage
-    //   const roleName = 'DoggersDogDelegationRole'
-    //   if (isProd) {
-    //     this.createDelegation(roleName)
-    //     this.createProdRecords()
-    //   } else if (DOMAIN_DELEGATED) {
-    //     this.registerDelegationRecord(this, roleName)
-    //   }
-    // }
-    //
-    // private createDelegation(roleName: string) {
-    //   const betaPrincipal = new AccountPrincipal(ACCOUNTS.beta)
-    //   new Role(this, roleName, {
-    //     assumedBy: betaPrincipal,
-    //     inlinePolicies: {
-    //       delegation: new PolicyDocument({
-    //         statements: [
-    //           new PolicyStatement({
-    //             actions: ['route53:ChangeResourceRecordSets'],
-    //             resources: [this.hostedZone.hostedZoneArn],
-    //           }),
-    //           new PolicyStatement({
-    //             actions: ['route53:ListHostedZonesByName'],
-    //             resources: ['*'],
-    //           }),
-    //         ]
-    //       })
-    //     },
-    //     roleName: roleName,
-    //   })
-    //   this.hostedZone.grantDelegation(betaPrincipal)
-    // }
-    //
-    // private registerDelegationRecord(scope: Construct, roleName: string) {
-    //   const roleArn = Stack.of(scope).formatArn({
-    //     region: '',
-    //     service: 'iam',
-    //     resource: 'role',
-    //     account: ACCOUNTS.prod,
-    //     resourceName: roleName,
-    //   })
-    //   const delegationRole = Role.fromRoleArn(this, `DoggersDogHostedZoneDelegationRole`, roleArn)
-    //   new CrossAccountZoneDelegationRecord(this, `${this.hostedZone.zoneName}Record`, {
-    //     delegationRole: delegationRole,
-    //     delegatedZone: this.hostedZone,
-    //     parentHostedZoneName: PROD_ZONE_NAME,
-    //   })
-    // }
-    //
-    // private createProdRecords() {
-    //   // @ts-ignore
-    //   if (BLUESKY_VERIFICATION_TXT !== "") {
-    //     new TxtRecord(this, 'BlueskyRecord', {
-    //       zone: this.hostedZone,
-    //       recordName: '_atproto',
-    //       values: [BLUESKY_VERIFICATION_TXT],
-    //     })
-    //   }
-    //
-    //   // @ts-ignore
-    //   if (MINECRAFT_SERVER_IP !== "") {
-    //     new ARecord(this, 'MinecraftServerARecord', {
-    //       zone: this.hostedZone,
-    //       target: RecordTarget.fromIpAddresses(MINECRAFT_SERVER_IP)
-    //     })
-    //   }
+      // Delegate to the beta stage
+      const roleName = 'DoggersDogDelegationRole'
+      if (isProd) {
+        this.createDelegation(roleName)
+        this.createProdRecords()
+      } else if (DOMAIN_DELEGATED) {
+        this.registerDelegationRecord(this, roleName)
+      }
+    }
+
+    private createDelegation(roleName: string) {
+      const betaPrincipal = new AccountPrincipal(ACCOUNTS.beta)
+      new Role(this, roleName, {
+        assumedBy: betaPrincipal,
+        inlinePolicies: {
+          delegation: new PolicyDocument({
+            statements: [
+              new PolicyStatement({
+                actions: ['route53:ChangeResourceRecordSets'],
+                resources: [this.hostedZone.hostedZoneArn],
+              }),
+              new PolicyStatement({
+                actions: ['route53:ListHostedZonesByName'],
+                resources: ['*'],
+              }),
+            ]
+          })
+        },
+        roleName: roleName,
+      })
+      this.hostedZone.grantDelegation(betaPrincipal)
+    }
+
+    private registerDelegationRecord(scope: Construct, roleName: string) {
+      const roleArn = Stack.of(scope).formatArn({
+        region: '',
+        service: 'iam',
+        resource: 'role',
+        account: ACCOUNTS.prod,
+        resourceName: roleName,
+      })
+      const delegationRole = Role.fromRoleArn(this, `DoggersDogHostedZoneDelegationRole`, roleArn)
+      new CrossAccountZoneDelegationRecord(this, `${this.hostedZone.zoneName}Record`, {
+        delegationRole: delegationRole,
+        delegatedZone: this.hostedZone,
+        parentHostedZoneName: PROD_ZONE_NAME,
+      })
+    }
+
+    private createProdRecords() {
+      // @ts-ignore
+      if (BLUESKY_VERIFICATION_TXT !== "") {
+        new TxtRecord(this, 'BlueskyRecord', {
+          zone: this.hostedZone,
+          recordName: '_atproto',
+          values: [BLUESKY_VERIFICATION_TXT],
+        })
+      }
+
+      // @ts-ignore
+      if (MINECRAFT_SERVER_IP !== "") {
+        new ARecord(this, 'MinecraftServerARecord', {
+          zone: this.hostedZone,
+          target: RecordTarget.fromIpAddresses(MINECRAFT_SERVER_IP)
+        })
+      }
   }
 }
