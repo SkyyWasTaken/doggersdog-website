@@ -100,7 +100,7 @@ class SiteInfrastructureConstruct extends Construct {
             },
             lifecycleRules: [
                 {
-                    expiration: Duration.days(30),
+                    expiration: Duration.days(2),
                 }
             ]
         })
