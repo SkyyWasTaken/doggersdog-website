@@ -86,7 +86,7 @@ class SiteInfrastructureConstruct extends Construct {
 
         const balancerSecurityGroup = new SecurityGroup(this, 'CloudfrontBalancerSecurityGroup', {
             vpc: vpc,
-            description: "doggers.dog's load balancer security group to allowlist the cloudfront distribution"
+            description: "load balancer security group to allowlist the cloudfront distribution"
         })
         const cloudfrontPeer = Peer.prefixList("com.amazonaws.global.cloudfront.origin-facing")
         balancerSecurityGroup.addIngressRule(cloudfrontPeer, Port.tcp(443))
