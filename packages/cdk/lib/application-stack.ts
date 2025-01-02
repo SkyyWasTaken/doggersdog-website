@@ -17,7 +17,7 @@ import {NodejsFunction} from "aws-cdk-lib/aws-lambda-nodejs";
 import {ApplicationLoadBalancer, ApplicationProtocol} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import {LambdaTarget} from "aws-cdk-lib/aws-elasticloadbalancingv2-targets";
 import {AllowedMethods, Distribution} from "aws-cdk-lib/aws-cloudfront";
-import {Certificate} from "aws-cdk-lib/aws-certificatemanager";
+import {Certificate, CertificateValidation} from "aws-cdk-lib/aws-certificatemanager";
 import {LoadBalancerV2Origin} from "aws-cdk-lib/aws-cloudfront-origins";
 import {CloudFrontTarget} from "aws-cdk-lib/aws-route53-targets";
 import {Asset} from "aws-cdk-lib/aws-s3-assets";
@@ -28,18 +28,15 @@ export class ApplicationStack extends Stack {
         super(scope, id, props);
         const isProd = props.env?.account === ACCOUNTS.prod
         const domainName = isProd ? PROD_ZONE_NAME : `${stageName.toLowerCase()}.${PROD_ZONE_NAME}`
-        const site_infra = new SiteInfrastructureConstruct(this, 'SiteInfrastructureConstruct', domainName)
-        const route_53 = new Route53Construct(this, 'Route53Construct', stageName, isProd, domainName, site_infra.cloudfrontTarget)
+        const route_53 = new Route53Construct(this, 'Route53Construct', stageName, isProd, domainName)
+        const site_infra = new SiteInfrastructureConstruct(this, 'SiteInfrastructureConstruct', route_53.certificate)
     }
 }
 
 class SiteInfrastructureConstruct extends Construct {
     public readonly cloudfrontTarget: CloudFrontTarget;
-    constructor(scope: Construct, id: string, domainName: string) {
+    constructor(scope: Construct, id: string, certificate: Certificate) {
         super(scope, id);
-        const certificate = new Certificate(this, 'DoggersDogCertificate', {
-            domainName: domainName,
-        })
 
         // Create the bucket
         const assetBucket: Bucket = new Bucket(this, "WebsiteBucket", {
@@ -113,13 +110,19 @@ class SiteInfrastructureConstruct extends Construct {
 
 class Route53Construct extends Construct {
     private readonly hostedZone: PublicHostedZone;
-    constructor(scope: Construct, id: string, stageName: string, isProd: boolean, domainName: string, cloudfrontTarget: CloudFrontTarget) {
+    public readonly certificate: Certificate;
+    constructor(scope: Construct, id: string, stageName: string, isProd: boolean, domainName: string) {
         super(scope, id);
 
         this.hostedZone = new PublicHostedZone(this, 'DoggersDogHostedZone', {
             zoneName: domainName,
             caaAmazon: true,
         })
+
+        // this.certificate = new Certificate(this, 'DoggersDogCertificate', {
+        //     domainName: domainName,
+        //     validation: CertificateValidation.fromDns(this.hostedZone)
+        // })
 
         // Delegate to the beta stage
         const roleName = 'DoggersDogDelegationRole'
@@ -129,10 +132,6 @@ class Route53Construct extends Construct {
         } else if (DOMAIN_DELEGATED) {
             this.registerDelegationRecord(this, roleName)
         }
-        // new aws_route53.ARecord(this, 'CloudfrontARecord', {
-        //     zone: this.hostedZone,
-        //     target: aws_route53.RecordTarget.fromAlias(cloudfrontTarget),
-        // })
     }
 
     private createDelegation(roleName: string) {
@@ -191,5 +190,12 @@ class Route53Construct extends Construct {
                 target: RecordTarget.fromIpAddresses(MINECRAFT_SERVER_IP)
             })
         }
+    }
+
+    public register_cloudfront_target(cloudfrontTarget: CloudFrontTarget) {
+        new aws_route53.ARecord(this, 'CloudfrontARecord', {
+            zone: this.hostedZone,
+            target: aws_route53.RecordTarget.fromAlias(cloudfrontTarget),
+        })
     }
 }
