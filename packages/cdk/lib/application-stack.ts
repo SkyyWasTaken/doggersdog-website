@@ -10,7 +10,7 @@ import {ACCOUNTS, BLUESKY_VERIFICATION_TXT, DOMAIN_DELEGATED, MINECRAFT_SERVER_I
 import {AccountPrincipal, PolicyDocument, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
 import {Construct} from "constructs";
 import {Bucket, BucketEncryption} from "aws-cdk-lib/aws-s3";
-import {IpAddresses, Vpc} from "aws-cdk-lib/aws-ec2";
+import {IpAddresses, Peer, Port, SecurityGroup, Vpc} from "aws-cdk-lib/aws-ec2";
 import {CfnWebACL} from "aws-cdk-lib/aws-wafv2";
 import {Code, Runtime} from "aws-cdk-lib/aws-lambda";
 import {NodejsFunction} from "aws-cdk-lib/aws-lambda-nodejs";
@@ -84,9 +84,17 @@ class SiteInfrastructureConstruct extends Construct {
 
         const lambda_target_group = new LambdaTarget(assetLambda)
 
+        const balancerSecurityGroup = new SecurityGroup(this, 'CloudfrontBalancerSecurityGroup', {
+            vpc: vpc,
+            description: "doggers.dog's load balancer security group to allowlist the cloudfront distribution"
+        })
+        const cloudfrontPeer = Peer.prefixList("com.amazonaws.global.cloudfront.origin-facing")
+        balancerSecurityGroup.addIngressRule(cloudfrontPeer, Port.tcp(443))
+
         const load_balancer = new ApplicationLoadBalancer(this, "WebsiteLoadBalancer", {
             vpc: vpc,
             internetFacing: true,
+            securityGroup: balancerSecurityGroup
         })
         const balancer_bucket = new Bucket(this, "CloudfrontBalancerBucket", {
             removalPolicy: RemovalPolicy.DESTROY,
