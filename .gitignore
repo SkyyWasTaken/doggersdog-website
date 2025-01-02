@@ -1,6 +1,7 @@
 # Main directory
 **/node_modules
 **/.idea
+website
 
 # CDK
 packages/cdk/.cdk.staging
@@ -9,4 +10,6 @@ packages/cdk/**/*.js
 packages/cdk/*.d.ts
 !packages/cdk/jest.config.js
 
-#
+# API
+packages/api/**/*.js
+packages/api/**/*.d.ts
