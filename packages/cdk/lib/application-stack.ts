@@ -129,10 +129,10 @@ class Route53Construct extends Construct {
         } else if (DOMAIN_DELEGATED) {
             this.registerDelegationRecord(this, roleName)
         }
-        new aws_route53.ARecord(this, 'CloudfrontARecord', {
-            zone: this.hostedZone,
-            target: aws_route53.RecordTarget.fromAlias(cloudfrontTarget),
-        })
+        // new aws_route53.ARecord(this, 'CloudfrontARecord', {
+        //     zone: this.hostedZone,
+        //     target: aws_route53.RecordTarget.fromAlias(cloudfrontTarget),
+        // })
     }
 
     private createDelegation(roleName: string) {
