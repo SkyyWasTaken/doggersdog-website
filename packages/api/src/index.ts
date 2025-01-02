@@ -44,6 +44,7 @@ export const handler: ALBHandler = async (event: ALBEvent, context: Context, cal
             statusDescription: statusDescription,
             body: body,
             isBase64Encoded: isBase64Encoded,
+            headers: headers
         }
     }).catch(err => {return err})
     console.log(`RESULT: ${JSON.stringify(res, null, 2).substring(0, 1000)}`)
