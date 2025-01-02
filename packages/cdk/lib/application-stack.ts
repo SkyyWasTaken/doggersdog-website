@@ -73,7 +73,7 @@ class SiteInfrastructureConstruct extends Construct {
         const assetLambda = new NodejsFunction(this, "AssetLambda", {
             runtime: Runtime.NODEJS_22_X,
             handler: "index.handler",
-            projectRoot: "../api",
+            code: Code.fromAsset("../api/src"),
             depsLockFilePath: '../../package-lock.json',
             vpc: vpc,
             environment: {
@@ -188,7 +188,8 @@ class Route53Construct extends Construct {
         if (MINECRAFT_SERVER_IP !== "") {
             new ARecord(this, 'MinecraftServerARecord', {
                 zone: this.hostedZone,
-                target: RecordTarget.fromIpAddresses(MINECRAFT_SERVER_IP)
+                target: RecordTarget.fromIpAddresses(MINECRAFT_SERVER_IP),
+                recordName: "mc"
             })
         }
     }
