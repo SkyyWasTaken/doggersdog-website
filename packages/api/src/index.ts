@@ -20,19 +20,30 @@ export const handler: ALBHandler = async (event: ALBEvent, context: Context, cal
             isBase64Encoded = true;
             encoding = 'base64'
         }
-        const body = data.Body
-        if (body === undefined) {
-            return {
-                statusCode: 404,
-                body: 'Not found'
-            }
+        const requestBody = data.Body
+        let statusCode = 500
+        let statusDescription = '500 Internal Server Error'
+        let body = null
+        const headers = {
+            "Content-Type": "application/octet-stream"
+        }
+        let contentType = ""
+        if (requestBody === undefined) {
+            statusCode = 404
+            statusDescription ='404 Not found'
         } else {
-            const bytes = await body.transformToByteArray()
-            return {
-                statusCode: 200,
-                body: Buffer.from(bytes).toString(encoding),
-                isBase64Encoded: isBase64Encoded,
-            }
+            const bytes = await requestBody.transformToByteArray()
+            statusCode = 200
+            statusDescription = '200 OK'
+            body = Buffer.from(bytes).toString(encoding)
+            contentType = data.ContentType ?? ""
+            headers['Content-Type'] = contentType
+        }
+        return {
+            statusCode: statusCode,
+            statusDescription: statusDescription,
+            body: body,
+            isBase64Encoded: isBase64Encoded,
         }
     }).catch(err => {return err})
     console.log(`RESULT: ${JSON.stringify(res, null, 2).substring(0, 1000)}`)
