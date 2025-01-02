@@ -29,13 +29,13 @@ export class ApplicationStack extends Stack {
         const isProd = props.env?.account === ACCOUNTS.prod
         const domainName = isProd ? PROD_ZONE_NAME : `${stageName.toLowerCase()}.${PROD_ZONE_NAME}`
         const route_53 = new Route53Construct(this, 'Route53Construct', stageName, isProd, domainName)
-        const site_infra = new SiteInfrastructureConstruct(this, 'SiteInfrastructureConstruct', route_53.certificate)
+        const site_infra = new SiteInfrastructureConstruct(this, 'SiteInfrastructureConstruct', route_53.certificate, domainName)
     }
 }
 
 class SiteInfrastructureConstruct extends Construct {
     public readonly cloudfrontTarget: CloudFrontTarget;
-    constructor(scope: Construct, id: string, certificate: Certificate) {
+    constructor(scope: Construct, id: string, certificate: Certificate, domainName: string) {
         super(scope, id);
 
         // Create the bucket
@@ -56,55 +56,55 @@ class SiteInfrastructureConstruct extends Construct {
             })]
         })
 
-        // const webAccessControlList = new CfnWebACL(this, "WebACL", {
-        //     name: "WebACL",
-        //     defaultAction: {
-        //         allow: {}
-        //     },
-        //     scope: "CLOUDFRONT",
-        //     visibilityConfig: {
-        //         cloudWatchMetricsEnabled: true,
-        //         metricName: "WebACL",
-        //         sampledRequestsEnabled: true
-        //     }
-        // })
-        //
-        // const assetLambda = new NodejsFunction(this, "AssetLambda", {
-        //     runtime: Runtime.NODEJS_22_X,
-        //     handler: "index.handler",
-        //     code: Code.fromAsset("../api"),
-        //     depsLockFilePath: '../../package-lock.json',
-        //     vpc: vpc,
-        //     environment: {
-        //         BUCKET: assetBucket.bucketName
-        //     },
-        // })
-        // assetBucket.grantRead(assetLambda)
-        //
-        // const lambda_target_group = new LambdaTarget(assetLambda)
-        //
-        // const load_balancer = new ApplicationLoadBalancer(this, "WebsiteLoadBalancer", {
-        //     vpc: vpc,
-        //     internetFacing: true,
-        // })
-        // const listener = load_balancer.addListener('LambdaListener', {
-        //     protocol: ApplicationProtocol.HTTPS,
-        //     open: true,
-        // })
-        // listener.addTargets('LambdaTarget', {
-        //     targets: [lambda_target_group],
-        // })
-        // listener.addCertificates('LambdaListenerCertificate', [certificate])
-        // const cloudfrontDistribution = new Distribution(this, "websiteDistribution", {
-        //     defaultBehavior: {
-        //         origin: new LoadBalancerV2Origin(load_balancer),
-        //         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS
-        //     },
-        //     domainNames: [domainName],
-        //     certificate: certificate,
-        //     webAclId: webAccessControlList.attrArn,
-        // })
-        // this.cloudfrontTarget = new CloudFrontTarget(cloudfrontDistribution)
+        const webAccessControlList = new CfnWebACL(this, "WebACL", {
+            name: "WebACL",
+            defaultAction: {
+                allow: {}
+            },
+            scope: "CLOUDFRONT",
+            visibilityConfig: {
+                cloudWatchMetricsEnabled: true,
+                metricName: "WebACL",
+                sampledRequestsEnabled: true
+            }
+        })
+
+        const assetLambda = new NodejsFunction(this, "AssetLambda", {
+            runtime: Runtime.NODEJS_22_X,
+            handler: "index.handler",
+            code: Code.fromAsset("../api"),
+            depsLockFilePath: '../../package-lock.json',
+            vpc: vpc,
+            environment: {
+                BUCKET: assetBucket.bucketName
+            },
+        })
+        assetBucket.grantRead(assetLambda)
+
+        const lambda_target_group = new LambdaTarget(assetLambda)
+
+        const load_balancer = new ApplicationLoadBalancer(this, "WebsiteLoadBalancer", {
+            vpc: vpc,
+            internetFacing: true,
+        })
+        const listener = load_balancer.addListener('LambdaListener', {
+            protocol: ApplicationProtocol.HTTPS,
+            open: true,
+        })
+        listener.addTargets('LambdaTarget', {
+            targets: [lambda_target_group],
+        })
+        listener.addCertificates('LambdaListenerCertificate', [certificate])
+        const cloudfrontDistribution = new Distribution(this, "websiteDistribution", {
+            defaultBehavior: {
+                origin: new LoadBalancerV2Origin(load_balancer),
+                allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS
+            },
+            domainNames: [domainName],
+            certificate: certificate,
+            webAclId: webAccessControlList.attrArn,
+        })
+        this.cloudfrontTarget = new CloudFrontTarget(cloudfrontDistribution)
     }
 }
 
@@ -119,10 +119,10 @@ class Route53Construct extends Construct {
             caaAmazon: true,
         })
 
-        // this.certificate = new Certificate(this, 'DoggersDogCertificate', {
-        //     domainName: domainName,
-        //     validation: CertificateValidation.fromDns(this.hostedZone)
-        // })
+        this.certificate = new Certificate(this, 'DoggersDogCertificate', {
+            domainName: domainName,
+            validation: CertificateValidation.fromDns(this.hostedZone)
+        })
 
         // Delegate to the beta stage
         const roleName = 'DoggersDogDelegationRole'
