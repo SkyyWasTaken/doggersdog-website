@@ -35,6 +35,7 @@ export const handler: ALBHandler = async (event: ALBEvent, context: Context, cal
             }
         }
     }).catch(err => {return err})
+    console.log(`RESULT: ${JSON.stringify(res, null, 2).substring(0, 1000)}`)
     callback(null, res)
     return res
 
