@@ -13,7 +13,7 @@ export const handler: ALBHandler = async (event: ALBEvent, context: Context, cal
 
     const command = new S3.GetObjectCommand({Bucket: bucket, Key: key})
     const client = new S3.S3Client()
-    const res = await client.send(command).then(async (data) => {
+    const res = await client.send(command).then(async (data): Promise<ALBResult> => {
         let encoding: BufferEncoding = 'utf8'
         let isBase64Encoded = false;
         if (data.ContentType?.includes('image/')) {
@@ -23,7 +23,7 @@ export const handler: ALBHandler = async (event: ALBEvent, context: Context, cal
         const requestBody = data.Body
         let statusCode = 500
         let statusDescription = '500 Internal Server Error'
-        let body = null
+        let body = undefined
         const headers = {
             "Content-Type": "application/octet-stream"
         }
@@ -50,5 +50,4 @@ export const handler: ALBHandler = async (event: ALBEvent, context: Context, cal
     console.log(`RESULT: ${JSON.stringify(res, null, 2).substring(0, 1000)}`)
     callback(null, res)
     return res
-
 }

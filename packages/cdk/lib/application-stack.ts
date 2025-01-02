@@ -1,4 +1,4 @@
-import {aws_route53, DockerImage, RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
+import {aws_route53, DockerImage, Duration, RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
 import {
     ARecord,
     CrossAccountZoneDelegationRecord,
@@ -88,6 +88,23 @@ class SiteInfrastructureConstruct extends Construct {
             vpc: vpc,
             internetFacing: true,
         })
+        const balancer_bucket = new Bucket(this, "CloudfrontBalancerBucket", {
+            removalPolicy: RemovalPolicy.DESTROY,
+            autoDeleteObjects: true,
+            encryption: BucketEncryption.S3_MANAGED,
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true
+            },
+            lifecycleRules: [
+                {
+                    expiration: Duration.days(30),
+                }
+            ]
+        })
+        load_balancer.logAccessLogs(balancer_bucket, 'CloudfrontAccessLogs')
         const listener = load_balancer.addListener('LambdaListener', {
             protocol: ApplicationProtocol.HTTPS,
             open: true,
