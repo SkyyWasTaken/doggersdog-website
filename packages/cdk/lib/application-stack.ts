@@ -1,4 +1,4 @@
-import {aws_route53, RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
+import {aws_route53, DockerImage, RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
 import {
     ARecord,
     CrossAccountZoneDelegationRecord,
@@ -20,6 +20,8 @@ import {AllowedMethods, Distribution} from "aws-cdk-lib/aws-cloudfront";
 import {Certificate} from "aws-cdk-lib/aws-certificatemanager";
 import {LoadBalancerV2Origin} from "aws-cdk-lib/aws-cloudfront-origins";
 import {CloudFrontTarget} from "aws-cdk-lib/aws-route53-targets";
+import {Asset} from "aws-cdk-lib/aws-s3-assets";
+import {BucketDeployment, Source} from "aws-cdk-lib/aws-s3-deployment";
 
 export class ApplicationStack extends Stack {
     constructor(scope: Construct, id: string, props: StackProps, stageName: string) {
@@ -49,55 +51,63 @@ class SiteInfrastructureConstruct extends Construct {
             ipAddresses: IpAddresses.cidr("10.0.0.0/16"),
         })
 
-        const webAccessControlList = new CfnWebACL(this, "WebACL", {
-            name: "WebACL",
-            defaultAction: {
-                allow: {}
-            },
-            scope: "CLOUDFRONT",
-            visibilityConfig: {
-                cloudWatchMetricsEnabled: true,
-                metricName: "WebACL",
-                sampledRequestsEnabled: true
-            }
-        })
 
-        const assetLambda = new NodejsFunction(this, "AssetLambda", {
-            runtime: Runtime.NODEJS_22_X,
-            handler: "index.handler",
-            code: Code.fromAsset("../api"),
-            depsLockFilePath: '../../package-lock.json',
+        const deployment = new BucketDeployment(this, "WebsiteDeploymentBucket", {
+            destinationBucket: assetBucket,
             vpc: vpc,
-            environment: {
-                BUCKET: assetBucket.bucketName
-            },
+            sources: [Source.asset("../../website", {
+            })]
         })
-        assetBucket.grantRead(assetLambda)
 
-        const lambda_target_group = new LambdaTarget(assetLambda)
-
-        const load_balancer = new ApplicationLoadBalancer(this, "WebsiteLoadBalancer", {
-            vpc: vpc,
-            internetFacing: true,
-        })
-        const listener = load_balancer.addListener('LambdaListener', {
-            protocol: ApplicationProtocol.HTTPS,
-            open: true,
-        })
-        listener.addTargets('LambdaTarget', {
-            targets: [lambda_target_group],
-        })
-        listener.addCertificates('LambdaListenerCertificate', [certificate])
-        const cloudfrontDistribution = new Distribution(this, "websiteDistribution", {
-            defaultBehavior: {
-                origin: new LoadBalancerV2Origin(load_balancer),
-                allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS
-            },
-            domainNames: [domainName],
-            certificate: certificate,
-            webAclId: webAccessControlList.attrArn,
-        })
-        this.cloudfrontTarget = new CloudFrontTarget(cloudfrontDistribution)
+        // const webAccessControlList = new CfnWebACL(this, "WebACL", {
+        //     name: "WebACL",
+        //     defaultAction: {
+        //         allow: {}
+        //     },
+        //     scope: "CLOUDFRONT",
+        //     visibilityConfig: {
+        //         cloudWatchMetricsEnabled: true,
+        //         metricName: "WebACL",
+        //         sampledRequestsEnabled: true
+        //     }
+        // })
+        //
+        // const assetLambda = new NodejsFunction(this, "AssetLambda", {
+        //     runtime: Runtime.NODEJS_22_X,
+        //     handler: "index.handler",
+        //     code: Code.fromAsset("../api"),
+        //     depsLockFilePath: '../../package-lock.json',
+        //     vpc: vpc,
+        //     environment: {
+        //         BUCKET: assetBucket.bucketName
+        //     },
+        // })
+        // assetBucket.grantRead(assetLambda)
+        //
+        // const lambda_target_group = new LambdaTarget(assetLambda)
+        //
+        // const load_balancer = new ApplicationLoadBalancer(this, "WebsiteLoadBalancer", {
+        //     vpc: vpc,
+        //     internetFacing: true,
+        // })
+        // const listener = load_balancer.addListener('LambdaListener', {
+        //     protocol: ApplicationProtocol.HTTPS,
+        //     open: true,
+        // })
+        // listener.addTargets('LambdaTarget', {
+        //     targets: [lambda_target_group],
+        // })
+        // listener.addCertificates('LambdaListenerCertificate', [certificate])
+        // const cloudfrontDistribution = new Distribution(this, "websiteDistribution", {
+        //     defaultBehavior: {
+        //         origin: new LoadBalancerV2Origin(load_balancer),
+        //         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS
+        //     },
+        //     domainNames: [domainName],
+        //     certificate: certificate,
+        //     webAclId: webAccessControlList.attrArn,
+        // })
+        // this.cloudfrontTarget = new CloudFrontTarget(cloudfrontDistribution)
     }
 }
 
