@@ -73,7 +73,7 @@ class SiteInfrastructureConstruct extends Construct {
         const assetLambda = new NodejsFunction(this, "AssetLambda", {
             runtime: Runtime.NODEJS_22_X,
             handler: "index.handler",
-            code: Code.fromAsset("../api"),
+            projectRoot: "../api",
             depsLockFilePath: '../../package-lock.json',
             vpc: vpc,
             environment: {
