@@ -116,7 +116,10 @@ class SiteInfrastructureConstruct extends Construct {
         const cloudfrontDistribution = new Distribution(this, "websiteDistribution", {
             defaultBehavior: {
                 origin: new LoadBalancerV2Origin(load_balancer),
-                allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS
+                allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+                originRequestPolicy: {
+                    originRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
+                }
             },
             domainNames: [domainName],
             certificate: certificate,
