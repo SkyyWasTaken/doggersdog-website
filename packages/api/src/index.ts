@@ -3,7 +3,7 @@ import process from "node:process";
 import * as S3 from '@aws-sdk/client-s3'
 
 
-export const handler: ALBHandler = async (event: ALBEvent, context: Context, callback: Callback<ALBResult>) => {
+export const handler: (event: ALBEvent, context: Context, callback: Callback<ALBResult>) => Promise<void> = async (event: ALBEvent, context: Context, callback: Callback<ALBResult>) => {
     const bucket = process.env.BUCKET;
     let key = event.path.replace('/', '');
 
@@ -49,5 +49,4 @@ export const handler: ALBHandler = async (event: ALBEvent, context: Context, cal
     }).catch(err => {return err})
     console.log(`RESULT: ${JSON.stringify(res, null, 2).substring(0, 1000)}`)
     callback(null, res)
-    return res
 }
