@@ -49,14 +49,6 @@ class SiteInfrastructureConstruct extends Construct {
             ipAddresses: IpAddresses.cidr("10.0.0.0/16"),
         })
 
-
-        const deployment = new BucketDeployment(this, "WebsiteDeploymentBucket", {
-            destinationBucket: assetBucket,
-            vpc: vpc,
-            sources: [Source.asset("../../website", {
-            })]
-        })
-
         const webAccessControlList = new CfnWebACL(this, "WebACL", {
             name: "WebACL",
             defaultAction: {
@@ -134,6 +126,13 @@ class SiteInfrastructureConstruct extends Construct {
             webAclId: webAccessControlList.attrArn,
         })
         this.cloudfrontTarget = new CloudFrontTarget(cloudfrontDistribution)
+        const deployment = new BucketDeployment(this, "WebsiteDeploymentBucket", {
+            destinationBucket: assetBucket,
+            distribution: cloudfrontDistribution,
+            vpc: vpc,
+            sources: [Source.asset("../../website", {
+            })]
+        })
     }
 }
 
