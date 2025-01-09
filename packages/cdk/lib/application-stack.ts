@@ -85,9 +85,6 @@ class SiteInfrastructureConstruct extends Construct {
             defaultBehavior: {
                 origin: S3BucketOrigin.withOriginAccessControl(assetBucket),
                 allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-                originRequestPolicy: {
-                    originRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
-                }
             },
             defaultRootObject: "index.html",
             domainNames: [domainName],
@@ -96,7 +93,7 @@ class SiteInfrastructureConstruct extends Construct {
         })
         const deployment = new BucketDeployment(this, "WebsiteDeploymentBucketV2", {
             destinationBucket: assetBucket,
-            distribution: cloudfrontDistribution,
+            // distribution: cloudfrontDistribution,
             sources: [Source.asset("../../website", {
             })]
         })
