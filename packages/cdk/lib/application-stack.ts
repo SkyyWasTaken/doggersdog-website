@@ -16,9 +16,9 @@ import {Code, Runtime} from "aws-cdk-lib/aws-lambda";
 import {NodejsFunction} from "aws-cdk-lib/aws-lambda-nodejs";
 import {ApplicationLoadBalancer, ApplicationProtocol} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import {LambdaTarget} from "aws-cdk-lib/aws-elasticloadbalancingv2-targets";
-import {AllowedMethods, Distribution} from "aws-cdk-lib/aws-cloudfront";
+import {AllowedMethods, CloudFrontWebDistribution, Distribution} from "aws-cdk-lib/aws-cloudfront";
 import {Certificate, CertificateValidation} from "aws-cdk-lib/aws-certificatemanager";
-import {LoadBalancerV2Origin} from "aws-cdk-lib/aws-cloudfront-origins";
+import {LoadBalancerV2Origin, OriginGroup, S3BucketOrigin} from "aws-cdk-lib/aws-cloudfront-origins";
 import {CloudFrontTarget} from "aws-cdk-lib/aws-route53-targets";
 import {Asset} from "aws-cdk-lib/aws-s3-assets";
 import {BucketDeployment, Source} from "aws-cdk-lib/aws-s3-deployment";
@@ -41,13 +41,16 @@ class SiteInfrastructureConstruct extends Construct {
 
         // Create the bucket
         const assetBucket: Bucket = new Bucket(this, "WebsiteBucket", {
+            autoDeleteObjects: true,
             encryption: BucketEncryption.S3_MANAGED,
-            removalPolicy: RemovalPolicy.DESTROY
+            removalPolicy: RemovalPolicy.DESTROY,
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true
+            },
         });
-
-        const vpc = new Vpc(this, "WebsiteVPC", {
-            ipAddresses: IpAddresses.cidr("10.0.0.0/16"),
-        })
 
         const webAccessControlList = new CfnWebACL(this, "WebACL", {
             name: "WebACL",
@@ -61,61 +64,9 @@ class SiteInfrastructureConstruct extends Construct {
                 sampledRequestsEnabled: true
             }
         })
-
-        const assetLambda = new NodejsFunction(this, "AssetLambda", {
-            runtime: Runtime.NODEJS_22_X,
-            handler: "index.handler",
-            code: Code.fromAsset("../api/dist/"),
-            depsLockFilePath: '../../package-lock.json',
-            vpc: vpc,
-            environment: {
-                BUCKET: assetBucket.bucketName
-            },
-        })
-        assetBucket.grantRead(assetLambda)
-
-        const lambda_target_group = new LambdaTarget(assetLambda)
-
-        const balancerSecurityGroup = new SecurityGroup(this, 'CloudfrontBalancerSecurityGroup', {
-            vpc: vpc,
-            description: "load balancer security group to allowlist the cloudfront distribution"
-        })
-        const cloudfrontPeer = Peer.prefixList("pl-3b927c52")
-        balancerSecurityGroup.addIngressRule(cloudfrontPeer, Port.tcp(443))
-
-        const load_balancer = new ApplicationLoadBalancer(this, "WebsiteLoadBalancer", {
-            vpc: vpc,
-            internetFacing: true,
-            securityGroup: balancerSecurityGroup
-        })
-        const balancer_bucket = new Bucket(this, "CloudfrontBalancerBucket", {
-            removalPolicy: RemovalPolicy.DESTROY,
-            autoDeleteObjects: true,
-            encryption: BucketEncryption.S3_MANAGED,
-            blockPublicAccess: {
-                blockPublicAcls: true,
-                blockPublicPolicy: true,
-                ignorePublicAcls: true,
-                restrictPublicBuckets: true
-            },
-            lifecycleRules: [
-                {
-                    expiration: Duration.days(2),
-                }
-            ]
-        })
-        load_balancer.logAccessLogs(balancer_bucket, 'CloudfrontAccessLogs')
-        const listener = load_balancer.addListener('LambdaListener', {
-            protocol: ApplicationProtocol.HTTPS,
-            open: true,
-        })
-        listener.addTargets('LambdaTarget', {
-            targets: [lambda_target_group],
-        })
-        listener.addCertificates('LambdaListenerCertificate', [certificate])
         const cloudfrontDistribution = new Distribution(this, "websiteDistribution", {
             defaultBehavior: {
-                origin: new LoadBalancerV2Origin(load_balancer),
+                origin: S3BucketOrigin.withOriginAccessControl(assetBucket),
                 allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
                 originRequestPolicy: {
                     originRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
@@ -125,14 +76,13 @@ class SiteInfrastructureConstruct extends Construct {
             certificate: certificate,
             webAclId: webAccessControlList.attrArn,
         })
-        this.cloudfrontTarget = new CloudFrontTarget(cloudfrontDistribution)
-        const deployment = new BucketDeployment(this, "WebsiteDeploymentBucket", {
+        const deployment = new BucketDeployment(this, "WebsiteDeploymentBucketV2", {
             destinationBucket: assetBucket,
             distribution: cloudfrontDistribution,
-            vpc: vpc,
             sources: [Source.asset("../../website", {
             })]
         })
+        this.cloudfrontTarget = new CloudFrontTarget(cloudfrontDistribution)
     }
 }
 
