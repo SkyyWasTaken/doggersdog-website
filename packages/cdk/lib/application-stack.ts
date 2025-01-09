@@ -1,4 +1,4 @@
-import {aws_route53, DockerImage, Duration, RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
+import {aws_route53, Duration, RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
 import {
     ARecord,
     CrossAccountZoneDelegationRecord,
@@ -10,17 +10,14 @@ import {ACCOUNTS, BLUESKY_VERIFICATION_TXT, DOMAIN_DELEGATED, MINECRAFT_SERVER_I
 import {AccountPrincipal, PolicyDocument, PolicyStatement, Role} from "aws-cdk-lib/aws-iam";
 import {Construct} from "constructs";
 import {Bucket, BucketEncryption} from "aws-cdk-lib/aws-s3";
-import {IpAddresses, Peer, Port, SecurityGroup, Vpc} from "aws-cdk-lib/aws-ec2";
 import {CfnWebACL} from "aws-cdk-lib/aws-wafv2";
-import {Code, Runtime} from "aws-cdk-lib/aws-lambda";
-import {NodejsFunction} from "aws-cdk-lib/aws-lambda-nodejs";
-import {ApplicationLoadBalancer, ApplicationProtocol} from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import {LambdaTarget} from "aws-cdk-lib/aws-elasticloadbalancingv2-targets";
-import {AllowedMethods, CloudFrontWebDistribution, Distribution} from "aws-cdk-lib/aws-cloudfront";
+import {
+    AllowedMethods,
+    Distribution,
+} from "aws-cdk-lib/aws-cloudfront";
 import {Certificate, CertificateValidation} from "aws-cdk-lib/aws-certificatemanager";
-import {LoadBalancerV2Origin, OriginGroup, S3BucketOrigin} from "aws-cdk-lib/aws-cloudfront-origins";
+import {S3BucketOrigin, S3StaticWebsiteOrigin} from "aws-cdk-lib/aws-cloudfront-origins";
 import {CloudFrontTarget} from "aws-cdk-lib/aws-route53-targets";
-import {Asset} from "aws-cdk-lib/aws-s3-assets";
 import {BucketDeployment, Source} from "aws-cdk-lib/aws-s3-deployment";
 
 export class ApplicationStack extends Stack {
@@ -40,6 +37,24 @@ class SiteInfrastructureConstruct extends Construct {
         super(scope, id);
 
         // Create the bucket
+        const assetBucketLoggingBucket: Bucket = new Bucket(this, "assetAccessLogs", {
+            autoDeleteObjects: true,
+            encryption: BucketEncryption.S3_MANAGED,
+            removalPolicy: RemovalPolicy.DESTROY,
+            blockPublicAccess: {
+                blockPublicAcls: true,
+                blockPublicPolicy: true,
+                ignorePublicAcls: true,
+                restrictPublicBuckets: true
+            },
+            lifecycleRules: [
+                {
+                    expiration: Duration.days(1),
+                }
+            ]
+        });
+
+        // Create the bucket
         const assetBucket: Bucket = new Bucket(this, "WebsiteBucket", {
             autoDeleteObjects: true,
             encryption: BucketEncryption.S3_MANAGED,
@@ -50,6 +65,7 @@ class SiteInfrastructureConstruct extends Construct {
                 ignorePublicAcls: true,
                 restrictPublicBuckets: true
             },
+            serverAccessLogsBucket: assetBucketLoggingBucket
         });
 
         const webAccessControlList = new CfnWebACL(this, "WebACL", {
@@ -63,6 +79,7 @@ class SiteInfrastructureConstruct extends Construct {
                 metricName: "WebACL",
                 sampledRequestsEnabled: true
             }
+
         })
         const cloudfrontDistribution = new Distribution(this, "websiteDistribution", {
             defaultBehavior: {
@@ -72,6 +89,7 @@ class SiteInfrastructureConstruct extends Construct {
                     originRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
                 }
             },
+            defaultRootObject: "index.html",
             domainNames: [domainName],
             certificate: certificate,
             webAclId: webAccessControlList.attrArn,
