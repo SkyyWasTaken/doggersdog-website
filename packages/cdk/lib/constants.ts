@@ -15,4 +15,4 @@ export const DOMAIN_DELEGATED = true
 
 export const BLUESKY_VERIFICATION_TXT = "did=did:plc:coznjpy5dbe53sf5syfwisx5"
 
-export const MINECRAFT_SERVER_IP = "184.54.65.103"
+export const MINECRAFT_SERVER_IP = "192.24.207.200"
